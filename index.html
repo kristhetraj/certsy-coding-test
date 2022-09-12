@@ -1,0 +1,176 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@8.3.12/konva.min.js"></script>
+    <style>
+      #container {
+        background-color: grey;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+
+    <script>
+      var stage = new Konva.Stage({
+        container: 'container', // id of container <div>
+        width: 500,
+        height: 500,
+      });
+      var layer = new Konva.Layer();
+      stage.add(layer);
+
+      const gridSize = 50;
+
+      const leftWall = 100;
+      const topWall = 100;
+      const noGridTiles = 5;
+      const rightWall = leftWall + noGridTiles * gridSize;
+      const bottomWall = topWall + noGridTiles * gridSize;
+
+      var table = new Konva.Rect({
+        x: leftWall,
+        y: topWall,
+        width: noGridTiles * gridSize,
+        height: noGridTiles * gridSize,
+        fill: 'green',
+        stroke: 'black',
+        strokeWidth: 1,
+      });
+      layer.add(table);
+
+      const bodyRadius = gridSize / 2;
+      var robotBody = new Konva.Circle({
+        x: leftWall + gridSize / 2,
+        y: topWall + gridSize / 2,
+        radius: gridSize / 2,
+        fill: 'red',
+        stroke: 'black',
+        strokeWidth: 1,
+      });
+      layer.add(robotBody);
+
+      const headRadius = (1 / 8) * gridSize;
+      var robotHead = new Konva.Circle({
+        x: robotBody.x() + gridSize / 4,
+        y: robotBody.y(),
+        radius: headRadius,
+        fill: 'pink',
+        stroke: 'black',
+        strokeWidth: 1,
+      });
+      layer.add(robotHead);
+      let direction = 'RIGHT';
+
+      const moveHeadDirection = (newDirection) => {
+        direction = newDirection;
+        switch (direction) {
+          case 'RIGHT':
+            robotHead.x(robotBody.x() + gridSize / 4);
+            robotHead.y(robotBody.y());
+            break;
+          case 'LEFT':
+            robotHead.x(robotBody.x() - gridSize / 4);
+            robotHead.y(robotBody.y());
+            break;
+          case 'TOP':
+            robotHead.x(robotBody.x());
+            robotHead.y(robotBody.y() - gridSize / 4);
+            break;
+          case 'BOTTOM':
+            robotHead.x(robotBody.x());
+            robotHead.y(robotBody.y() + gridSize / 4);
+            break;
+        }
+      };
+
+      const move = (moveDirection = 'FORWARD') => {
+        if (
+          (direction === 'RIGHT' && moveDirection === 'FORWARD') ||
+          (direction === 'LEFT' && moveDirection === 'BACKWARD')
+        ) {
+          const nextBodyPos = robotBody.x() + gridSize;
+          if (nextBodyPos < rightWall) {
+            robotBody.x(nextBodyPos);
+            robotHead.x(robotHead.x() + gridSize);
+          }
+        } else if (
+          (direction === 'LEFT' && moveDirection === 'FORWARD') ||
+          (direction === 'RIGHT' && moveDirection === 'BACKWARD')
+        ) {
+          const nextBodyPos = robotBody.x() - gridSize;
+          if (nextBodyPos > leftWall) {
+            robotBody.x(nextBodyPos);
+            robotHead.x(robotHead.x() - gridSize);
+          }
+        } else if (
+          (direction === 'TOP' && moveDirection === 'FORWARD') ||
+          (direction === 'BOTTOM' && moveDirection === 'BACKWARD')
+        ) {
+          const nextBodyPos = robotBody.y() - gridSize;
+          if (nextBodyPos > topWall) {
+            robotBody.y(nextBodyPos);
+            robotHead.y(robotHead.y() - gridSize);
+          }
+        } else if (
+          (direction === 'BOTTOM' && moveDirection === 'FORWARD') ||
+          (direction === 'TOP' && moveDirection === 'BACKWARD')
+        ) {
+          const nextBodyPos = robotBody.y() + gridSize;
+          if (nextBodyPos < bottomWall) {
+            robotBody.y(nextBodyPos);
+            robotHead.y(robotHead.y() + gridSize);
+          }
+        }
+      };
+
+      var container = stage.container();
+      container.tabIndex = 1;
+      container.focus();
+      container.addEventListener('keydown', function (e) {
+        if (e.keyCode === 37) {
+          // LEFT ARROW
+          switch (direction) {
+            case 'RIGHT':
+              moveHeadDirection('TOP');
+              break;
+            case 'LEFT':
+              moveHeadDirection('BOTTOM');
+              break;
+            case 'TOP':
+              moveHeadDirection('LEFT');
+              break;
+            case 'BOTTOM':
+              moveHeadDirection('RIGHT');
+              break;
+          }
+        } else if (e.keyCode === 38) {
+          // UP ARROW
+          move();
+        } else if (e.keyCode === 39) {
+          switch (direction) {
+            case 'RIGHT':
+              moveHeadDirection('BOTTOM');
+              break;
+            case 'LEFT':
+              moveHeadDirection('TOP');
+              break;
+            case 'TOP':
+              moveHeadDirection('RIGHT');
+              break;
+            case 'BOTTOM':
+              moveHeadDirection('LEFT');
+              break;
+          }
+        } else if (e.keyCode === 40) {
+          move('BACKWARD');
+          // DOWN ARROW
+        } else {
+          return;
+        }
+        e.preventDefault();
+      });
+
+      layer.draw();
+    </script>
+  </body>
+</html>
