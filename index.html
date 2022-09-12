@@ -13,7 +13,7 @@
     <script>
       var stage = new Konva.Stage({
         container: 'container', // id of container <div>
-        width: 500,
+        width: 1000,
         height: 500,
       });
       var layer = new Konva.Layer();
@@ -26,6 +26,44 @@
       const noGridTiles = 5;
       const rightWall = leftWall + noGridTiles * gridSize;
       const bottomWall = topWall + noGridTiles * gridSize;
+
+      var instructionText = new Konva.Text({
+        x: rightWall,
+        y: topWall - 50,
+        text: '[Instructions]\n\nTop arrow = forward\nBack arrow = backward\nLeft arrow = rotate left\nRight arrow = rotate right\nSpace bar = Report',
+        fontSize: 18,
+        fontFamily: 'Calibri',
+        fill: 'black',
+        width: 300,
+        padding: 20,
+        align: 'center',
+      });
+      layer.add(instructionText);
+
+      var commandText = new Konva.Text({
+        x: rightWall,
+        y: topWall + 100,
+        text: '[Commands]\n\n',
+        fontSize: 18,
+        fontFamily: 'Calibri',
+        fill: 'black',
+        width: 300,
+        padding: 20,
+        align: 'center',
+      });
+      layer.add(commandText);
+
+      const commands = [];
+      const addCommand = (command) => {
+        commands.push(command);
+        // console.log('commands', commands);
+        const commandTextStr = commands
+          .slice(commands.length - Math.min(10, commands.length))
+          .reduce((acc, curr) => {
+            return `${acc}\n${curr}`;
+          }, '[Commands]\n\n');
+        commandText.text(commandTextStr);
+      };
 
       var table = new Konva.Rect({
         x: leftWall,
@@ -59,24 +97,25 @@
         strokeWidth: 1,
       });
       layer.add(robotHead);
-      let direction = 'RIGHT';
+
+      let direction = 'EAST';
 
       const moveHeadDirection = (newDirection) => {
         direction = newDirection;
         switch (direction) {
-          case 'RIGHT':
+          case 'EAST':
             robotHead.x(robotBody.x() + gridSize / 4);
             robotHead.y(robotBody.y());
             break;
-          case 'LEFT':
+          case 'WEST':
             robotHead.x(robotBody.x() - gridSize / 4);
             robotHead.y(robotBody.y());
             break;
-          case 'TOP':
+          case 'NORTH':
             robotHead.x(robotBody.x());
             robotHead.y(robotBody.y() - gridSize / 4);
             break;
-          case 'BOTTOM':
+          case 'SOUTH':
             robotHead.x(robotBody.x());
             robotHead.y(robotBody.y() + gridSize / 4);
             break;
@@ -84,81 +123,112 @@
       };
 
       const move = (moveDirection = 'FORWARD') => {
+        let commandStr = '';
+        if (moveDirection === 'FORWARD') {
+          commandStr += 'move forward: ';
+        } else {
+          commandStr += 'move backward: ';
+        }
         if (
-          (direction === 'RIGHT' && moveDirection === 'FORWARD') ||
-          (direction === 'LEFT' && moveDirection === 'BACKWARD')
+          (direction === 'EAST' && moveDirection === 'FORWARD') ||
+          (direction === 'WEST' && moveDirection === 'BACKWARD')
         ) {
           const nextBodyPos = robotBody.x() + gridSize;
           if (nextBodyPos < rightWall) {
+            commandStr += 'success';
             robotBody.x(nextBodyPos);
             robotHead.x(robotHead.x() + gridSize);
+          } else {
+            commandStr += 'fail';
           }
         } else if (
-          (direction === 'LEFT' && moveDirection === 'FORWARD') ||
-          (direction === 'RIGHT' && moveDirection === 'BACKWARD')
+          (direction === 'WEST' && moveDirection === 'FORWARD') ||
+          (direction === 'EAST' && moveDirection === 'BACKWARD')
         ) {
           const nextBodyPos = robotBody.x() - gridSize;
           if (nextBodyPos > leftWall) {
+            commandStr += 'success';
             robotBody.x(nextBodyPos);
             robotHead.x(robotHead.x() - gridSize);
+          } else {
+            commandStr += 'fail';
           }
         } else if (
-          (direction === 'TOP' && moveDirection === 'FORWARD') ||
-          (direction === 'BOTTOM' && moveDirection === 'BACKWARD')
+          (direction === 'NORTH' && moveDirection === 'FORWARD') ||
+          (direction === 'SOUTH' && moveDirection === 'BACKWARD')
         ) {
           const nextBodyPos = robotBody.y() - gridSize;
           if (nextBodyPos > topWall) {
+            commandStr += 'success';
             robotBody.y(nextBodyPos);
             robotHead.y(robotHead.y() - gridSize);
+          } else {
+            commandStr += 'fail';
           }
         } else if (
-          (direction === 'BOTTOM' && moveDirection === 'FORWARD') ||
-          (direction === 'TOP' && moveDirection === 'BACKWARD')
+          (direction === 'SOUTH' && moveDirection === 'FORWARD') ||
+          (direction === 'NORTH' && moveDirection === 'BACKWARD')
         ) {
           const nextBodyPos = robotBody.y() + gridSize;
           if (nextBodyPos < bottomWall) {
+            commandStr += 'success';
             robotBody.y(nextBodyPos);
             robotHead.y(robotHead.y() + gridSize);
+          } else {
+            commandStr += 'fail';
           }
         }
+        addCommand(commandStr);
       };
 
       var container = stage.container();
       container.tabIndex = 1;
       container.focus();
       container.addEventListener('keydown', function (e) {
+        // console.log(e.keyCode);
+        if (e.keyCode === 32) {
+          // SPACE BAR
+          addCommand(
+            `direction: ${direction}, x: ${
+              robotBody.x() - leftWall - bodyRadius
+            }, y:${robotBody.y() - topWall - bodyRadius}`
+          );
+        }
         if (e.keyCode === 37) {
           // LEFT ARROW
+          addCommand('rotate left');
           switch (direction) {
-            case 'RIGHT':
-              moveHeadDirection('TOP');
+            case 'EAST':
+              moveHeadDirection('NORTH');
               break;
-            case 'LEFT':
-              moveHeadDirection('BOTTOM');
+            case 'WEST':
+              moveHeadDirection('SOUTH');
               break;
-            case 'TOP':
-              moveHeadDirection('LEFT');
+            case 'NORTH':
+              moveHeadDirection('WEST');
               break;
-            case 'BOTTOM':
-              moveHeadDirection('RIGHT');
+            case 'SOUTH':
+              moveHeadDirection('EAST');
               break;
           }
         } else if (e.keyCode === 38) {
           // UP ARROW
           move();
         } else if (e.keyCode === 39) {
+          // RIGHT ARROW
+          addCommand('rotate right');
           switch (direction) {
-            case 'RIGHT':
-              moveHeadDirection('BOTTOM');
+            case 'EAST':
+              moveHeadDirection('SOUTH');
               break;
-            case 'LEFT':
-              moveHeadDirection('TOP');
+            case 'WEST':
+              moveHeadDirection('NORTH');
               break;
-            case 'TOP':
-              moveHeadDirection('RIGHT');
+            case 'NORTH':
+              moveHeadDirection('EAST');
               break;
-            case 'BOTTOM':
-              moveHeadDirection('LEFT');
+            case 'SOUTH':
+              moveHeadDirection('WEST');
               break;
           }
         } else if (e.keyCode === 40) {
@@ -171,6 +241,8 @@
       });
 
       layer.draw();
+
+      
     </script>
   </body>
 </html>
