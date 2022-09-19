@@ -23,7 +23,7 @@
 
       const leftWall = 100;
       const topWall = 100;
-      const noGridTiles = 5;
+      const noGridTiles = 6;
       const rightWall = leftWall + noGridTiles * gridSize;
       const bottomWall = topWall + noGridTiles * gridSize;
 
@@ -75,6 +75,21 @@
         strokeWidth: 1,
       });
       layer.add(table);
+
+      var obstruction;
+      const renderObstruction = () => {
+        obstruction = new Konva.Rect({
+          x: leftWall + gridSize,
+          y: topWall + gridSize,
+          width: gridSize,
+          height: gridSize,
+          fill: 'blue',
+          stroke: 'black',
+          strokeWidth: 1,
+        });
+        layer.add(obstruction);
+      };
+      renderObstruction();
 
       const bodyRadius = gridSize / 2;
       var robotBody = new Konva.Circle({
@@ -129,50 +144,106 @@
         } else {
           commandStr += 'move backward: ';
         }
+        // move EAST
+
+        const getObstructionCheckOkay = (nextBodyPosX, nextBodyPosY) => {
+          const obstructionX = obstruction.x();
+          const obstructionY = obstruction.y();
+
+          const obstructionCheckOkay =
+            nextBodyPosX < obstructionX ||
+            nextBodyPosX > obstructionX + gridSize ||
+            nextBodyPosY < obstructionY ||
+            nextBodyPosY > obstructionY + gridSize;
+
+          return obstructionCheckOkay;
+        };
+
         if (
           (direction === 'EAST' && moveDirection === 'FORWARD') ||
           (direction === 'WEST' && moveDirection === 'BACKWARD')
         ) {
-          const nextBodyPos = robotBody.x() + gridSize;
-          if (nextBodyPos < rightWall) {
+          const nextBodyPosX = robotBody.x() + gridSize;
+          const nextBodyPosY = robotBody.y();
+          // wall check
+          const wallCheckOkay = nextBodyPosX < rightWall;
+          // obstructioncheck
+          const obstructionCheckOkay = getObstructionCheckOkay(
+            nextBodyPosX,
+            nextBodyPosY
+          );
+          // console.log('obstructionCheckOkay', { nextBodyPos, obsX: obstruction.x( });
+          if (wallCheckOkay && obstructionCheckOkay) {
             commandStr += 'success';
-            robotBody.x(nextBodyPos);
+            robotBody.x(nextBodyPosX);
             robotHead.x(robotHead.x() + gridSize);
           } else {
             commandStr += 'fail';
           }
-        } else if (
+        }
+        // move WEST
+        else if (
           (direction === 'WEST' && moveDirection === 'FORWARD') ||
           (direction === 'EAST' && moveDirection === 'BACKWARD')
         ) {
-          const nextBodyPos = robotBody.x() - gridSize;
-          if (nextBodyPos > leftWall) {
+          const nextBodyPosX = robotBody.x() - gridSize;
+          const nextBodyPosY = robotBody.y();
+          // wall check
+          const wallCheckOkay = nextBodyPosX > leftWall;
+          // obstructioncheck
+          const obstructionCheckOkay = getObstructionCheckOkay(
+            nextBodyPosX,
+            nextBodyPosY
+          );
+          if (wallCheckOkay && obstructionCheckOkay) {
             commandStr += 'success';
-            robotBody.x(nextBodyPos);
+            robotBody.x(nextBodyPosX);
             robotHead.x(robotHead.x() - gridSize);
           } else {
             commandStr += 'fail';
           }
-        } else if (
+        }
+        // move NORTH
+        else if (
           (direction === 'NORTH' && moveDirection === 'FORWARD') ||
           (direction === 'SOUTH' && moveDirection === 'BACKWARD')
         ) {
-          const nextBodyPos = robotBody.y() - gridSize;
-          if (nextBodyPos > topWall) {
+          const nextBodyPosX = robotBody.x();
+          const nextBodyPosY = robotBody.y() - gridSize;
+
+          // wall check
+          const wallCheckOkay = nextBodyPosY > topWall;
+          // obstructioncheck
+          const obstructionCheckOkay = getObstructionCheckOkay(
+            nextBodyPosX,
+            nextBodyPosY
+          );
+          if (wallCheckOkay && obstructionCheckOkay) {
             commandStr += 'success';
-            robotBody.y(nextBodyPos);
+            robotBody.y(nextBodyPosY);
             robotHead.y(robotHead.y() - gridSize);
           } else {
             commandStr += 'fail';
           }
-        } else if (
+        }
+        // move SOUTH
+        else if (
           (direction === 'SOUTH' && moveDirection === 'FORWARD') ||
           (direction === 'NORTH' && moveDirection === 'BACKWARD')
         ) {
-          const nextBodyPos = robotBody.y() + gridSize;
-          if (nextBodyPos < bottomWall) {
+          const nextBodyPosX = robotBody.x();
+          const nextBodyPosY = robotBody.y() + gridSize;
+
+          // wall check
+          const wallCheckOkay = nextBodyPosY < bottomWall;
+          // obstructioncheck
+          const obstructionCheckOkay = getObstructionCheckOkay(
+            nextBodyPosX,
+            nextBodyPosY
+          );
+          if (wallCheckOkay && obstructionCheckOkay) {
             commandStr += 'success';
-            robotBody.y(nextBodyPos);
+            robotBody.y(nextBodyPosY);
             robotHead.y(robotHead.y() + gridSize);
           } else {
             commandStr += 'fail';
@@ -241,8 +312,6 @@
       });
 
       layer.draw();
-
-      
     </script>
   </body>
 </html>
