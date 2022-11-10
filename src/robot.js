@@ -1,5 +1,26 @@
-import { addCircle } from './ui';
 import { orientation, direction, rotate } from './common';
+
+const moveHead = ({ newOrientation, robotHead, robotBody, gridSize }) => {
+  switch (newOrientation) {
+    case orientation.NORTH:
+      robotHead.x(robotBody.x());
+      robotHead.y(robotBody.y() - gridSize / 4);
+      break;
+    case orientation.SOUTH:
+      robotHead.x(robotBody.x());
+      robotHead.y(robotBody.y() + gridSize / 4);
+      break;
+    case orientation.EAST:
+      robotHead.x(robotBody.x() + gridSize / 4);
+      robotHead.y(robotBody.y());
+      break;
+    case orientation.WEST:
+      robotHead.x(robotBody.x() - gridSize / 4);
+      robotHead.y(robotBody.y());
+      break;
+  }
+  return newOrientation;
+};
 
 const rotateRobot = ({
   robotOrientation,
@@ -8,39 +29,38 @@ const rotateRobot = ({
   robotBody,
   gridSize,
 }) => {
+  let newOrientation;
   if (
     (robotOrientation === orientation.EAST &&
       rotateDirection === rotate.LEFT) ||
     (robotOrientation === orientation.WEST && rotateDirection === rotate.RIGHT)
   ) {
-    robotHead.x(robotBody.x());
-    robotHead.y(robotBody.y() - gridSize / 4);
-    return orientation.NORTH;
+    newOrientation = orientation.NORTH;
   } else if (
     (robotOrientation === orientation.EAST &&
       rotateDirection === rotate.RIGHT) ||
     (robotOrientation === orientation.WEST && rotateDirection === rotate.LEFT)
   ) {
-    robotHead.x(robotBody.x());
-    robotHead.y(robotBody.y() + gridSize / 4);
-    return orientation.SOUTH;
+    newOrientation = orientation.SOUTH;
   } else if (
     (robotOrientation === orientation.SOUTH &&
       rotateDirection === rotate.LEFT) ||
     (robotOrientation === orientation.NORTH && rotateDirection === rotate.RIGHT)
   ) {
-    robotHead.x(robotBody.x() + gridSize / 4);
-    robotHead.y(robotBody.y());
-    return orientation.EAST;
+    newOrientation = orientation.EAST;
   } else if (
     (robotOrientation === orientation.NORTH &&
       rotateDirection === rotate.LEFT) ||
     (robotOrientation === orientation.SOUTH && rotateDirection === rotate.RIGHT)
   ) {
-    robotHead.x(robotBody.x() - gridSize / 4);
-    robotHead.y(robotBody.y());
-    return orientation.WEST;
+    newOrientation = orientation.WEST;
   }
+  return moveHead({
+    newOrientation,
+    robotHead,
+    robotBody,
+    gridSize,
+  });
 };
 
 const moveRobot = ({
@@ -159,9 +179,10 @@ export const getRobot = ({
   rightWall,
   topWall,
   bottomWall,
+  canvas,
 }) => {
   const bodyRadius = gridSize / 2;
-  const robotBody = addCircle({
+  const robotBody = canvas.addCircle({
     x: leftWall + gridSize / 2,
     y: topWall + gridSize / 2,
     radius: gridSize / 2,
@@ -169,7 +190,7 @@ export const getRobot = ({
   });
 
   const headRadius = (1 / 8) * gridSize;
-  const robotHead = addCircle({
+  const robotHead = canvas.addCircle({
     x: robotBody.x() + gridSize / 4,
     y: robotBody.y(),
     radius: headRadius,
@@ -178,25 +199,16 @@ export const getRobot = ({
 
   let robotOrientation = orientation.EAST;
   return {
-    rotateLeft: () => {
+    rotate: (rotateDirection) => {
       robotOrientation = rotateRobot({
         robotOrientation,
-        rotateDirection: rotate.LEFT,
+        rotateDirection,
         robotHead,
         robotBody,
         gridSize,
       });
     },
-    rotateRight: () => {
-      robotOrientation = rotateRobot({
-        robotOrientation,
-        rotateDirection: rotate.RIGHT,
-        robotHead,
-        robotBody,
-        gridSize,
-      });
-    },
-    sendRobotMove: (moveDirection) => {
+    move: (moveDirection) => {
       return moveRobot({
         robotOrientation,
         moveDirection,
@@ -207,6 +219,20 @@ export const getRobot = ({
         rightWall,
         topWall,
         bottomWall,
+      });
+    },
+    place: ({ newRobotX, newRobotY, newOrientation }) => {
+      robotBody.x(leftWall + gridSize / 2 + newRobotX * gridSize);
+      robotBody.y(topWall + gridSize / 2 + newRobotY * gridSize);
+
+      robotHead.x(robotBody.x() + gridSize / 4);
+      robotHead.y(robotBody.y());
+
+      robotOrientation = moveHead({
+        newOrientation,
+        gridSize,
+        robotBody,
+        robotHead,
       });
     },
     getPosition: () => {
