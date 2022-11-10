@@ -1,6 +1,6 @@
-import { getCanvas } from './ui';
-import { direction, rotate } from './common';
-import { getRobot } from './robot';
+import { getCanvas } from './canvas';
+import { Direction, Orientation, Rotate } from './common';
+import { getRobot, PlaceParam } from './robot';
 import { getObstruction } from './obstruction';
 
 const gridSize = 50;
@@ -29,8 +29,8 @@ var activityLogText = canvas.addText({
   text: '[Activity Log]\n\n',
 });
 
-const activityLog = [];
-const addActivityLog = (activityLogEntry) => {
+const activityLog: string[] = [];
+const addActivityLog = (activityLogEntry: string) => {
   activityLog.push(activityLogEntry);
   // console.log('commands', commands);
   const activityLogStr = activityLog
@@ -54,6 +54,7 @@ var table = canvas.addRectangle({
 //   y: topWall + gridSize,
 //   width: gridSize,
 //   height: gridSize,
+//   canvas,
 // });
 
 const robot = getRobot({
@@ -73,60 +74,57 @@ const keys = {
   DOWN_ARROW: 40,
 };
 
-const commands = {
-  PLACE: 'PLACE',
-  MOVE: 'MOVE',
-  REVERSE: 'REVERSE',
-  LEFT: 'LEFT',
-  RIGHT: 'RIGHT',
-  REPORT: 'REPORT',
-};
+enum Commands {
+  PLACE = 'PLACE',
+  MOVE = 'MOVE',
+  REVERSE = 'REVERSE',
+  LEFT = 'LEFT',
+  RIGHT = 'RIGHT',
+  REPORT = 'REPORT',
+}
 
-canvas.addUiEventListener('keydown', (e) => {
+canvas.addUiEventListener('keydown', (e: any) => {
   // console.log(e.keyCode);
   if (e.keyCode === keys.SPACEBAR) {
-    sendCommand(commands.REPORT);
-  }
-  if (e.keyCode === keys.LEFT_ARROW) {
-    sendCommand(commands.LEFT);
+    sendCommand(Commands.REPORT);
+  } else if (e.keyCode === keys.LEFT_ARROW) {
+    sendCommand(Commands.LEFT);
   } else if (e.keyCode === keys.UP_ARROW) {
-    sendCommand(commands.MOVE);
+    sendCommand(Commands.MOVE);
   } else if (e.keyCode === keys.RIGHT_ARROW) {
-    sendCommand(commands.RIGHT);
+    sendCommand(Commands.RIGHT);
   } else if (e.keyCode === keys.DOWN_ARROW) {
-    sendCommand(commands.REVERSE);
-  } else {
-    return;
+    sendCommand(Commands.REVERSE);
   }
 
   e.preventDefault();
 });
 
-const sendCommand = (command, params) => {
+const sendCommand = (command: Commands, params?: PlaceParam) => {
   switch (command) {
-    case commands.PLACE:
+    case Commands.PLACE:
       addActivityLog(
         `place (x: ${params.newRobotX}, y: ${params.newRobotY}, orientation: ${params.newOrientation})`
       );
       robot.place(params);
       break;
-    case commands.MOVE:
-      const activityLogEntry = robot.move(direction.FORWARD);
+    case Commands.MOVE:
+      const activityLogEntry = robot.move(Direction.FORWARD);
       addActivityLog(activityLogEntry);
       break;
-    case commands.REVERSE:
-      const activityLogEntry2 = robot.move(direction.BACKWARD);
+    case Commands.REVERSE:
+      const activityLogEntry2 = robot.move(Direction.BACKWARD);
       addActivityLog(activityLogEntry2);
       break;
-    case commands.LEFT:
+    case Commands.LEFT:
       addActivityLog('rotate left');
-      robot.rotate(rotate.LEFT);
+      robot.rotate(Rotate.LEFT);
       break;
-    case commands.RIGHT:
+    case Commands.RIGHT:
       addActivityLog('rotate right');
-      robot.rotate(rotate.RIGHT);
+      robot.rotate(Rotate.RIGHT);
       break;
-    case commands.REPORT:
+    case Commands.REPORT:
       const robotPosition = robot.getPosition();
       addActivityLog(
         `report (x: ${robotPosition.x / gridSize}, y:${
@@ -138,8 +136,10 @@ const sendCommand = (command, params) => {
 };
 
 const elements = {
-  commands: document.getElementById('commands'),
-  submitCommands: document.getElementById('submit-commands'),
+  commands: document.getElementById('commands') as HTMLTextAreaElement,
+  submitCommands: document.getElementById(
+    'submit-commands'
+  ) as HTMLButtonElement,
 };
 
 elements.submitCommands.addEventListener(
@@ -150,7 +150,7 @@ elements.submitCommands.addEventListener(
     const commandsToRun = commandStr.split('\n');
 
     const firstPlaceCommand = commandsToRun.findIndex((command) => {
-      return command.startsWith(commands.PLACE);
+      return command.startsWith(Commands.PLACE);
     });
 
     if (firstPlaceCommand < 0) {
@@ -160,23 +160,23 @@ elements.submitCommands.addEventListener(
     // console.log('submit button click', { commandStr, commands });
     commandsToRun.slice(firstPlaceCommand).forEach((command) => {
       // console.log('command', command);
-      if (command.startsWith(commands.PLACE)) {
+      if (command.startsWith(Commands.PLACE)) {
         const placeVals = command.substring(6).split(',');
-        sendCommand(commands.PLACE, {
-          newRobotX: placeVals[0],
-          newRobotY: noGridTiles - 1 - placeVals[1],
-          newOrientation: placeVals[2],
+        sendCommand(Commands.PLACE, {
+          newRobotX: Number.parseInt(placeVals[0]),
+          newRobotY: noGridTiles - 1 - Number.parseInt(placeVals[1]),
+          newOrientation: placeVals[2] as Orientation,
         });
-      } else if (command.startsWith(commands.MOVE)) {
-        sendCommand(commands.MOVE);
-      } else if (command.startsWith(commands.REVERSE)) {
-        sendCommand(commands.REVERSE);
-      } else if (command.startsWith(commands.LEFT)) {
-        sendCommand(commands.LEFT);
-      } else if (command.startsWith(commands.RIGHT)) {
-        sendCommand(commands.RIGHT);
-      } else if (command.startsWith(commands.REPORT)) {
-        sendCommand(commands.REPORT);
+      } else if (command.startsWith(Commands.MOVE)) {
+        sendCommand(Commands.MOVE);
+      } else if (command.startsWith(Commands.REVERSE)) {
+        sendCommand(Commands.REVERSE);
+      } else if (command.startsWith(Commands.LEFT)) {
+        sendCommand(Commands.LEFT);
+      } else if (command.startsWith(Commands.RIGHT)) {
+        sendCommand(Commands.RIGHT);
+      } else if (command.startsWith(Commands.REPORT)) {
+        sendCommand(Commands.REPORT);
       }
     });
   },
