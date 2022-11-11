@@ -100,39 +100,66 @@ canvas.addUiEventListener('keydown', (e: any) => {
   e.preventDefault();
 });
 
-const sendCommand = (command: Commands, params?: PlaceParam) => {
+export const sendCommand = (command: Commands, params?: PlaceParam) => {
   switch (command) {
     case Commands.PLACE:
-      addActivityLog(
-        `place (x: ${params.newRobotX}, y: ${params.newRobotY}, orientation: ${params.newOrientation})`
-      );
       robot.place(params);
-      break;
+      return `place (x: ${params.newRobotX}, y: ${
+        noGridTiles - 1 - params.newRobotY
+      }, orientation: ${params.newOrientation})`;
     case Commands.MOVE:
-      const activityLogEntry = robot.move(Direction.FORWARD);
-      addActivityLog(activityLogEntry);
-      break;
+      return robot.move(Direction.FORWARD);
     case Commands.REVERSE:
-      const activityLogEntry2 = robot.move(Direction.BACKWARD);
-      addActivityLog(activityLogEntry2);
-      break;
+      return robot.move(Direction.BACKWARD);
     case Commands.LEFT:
-      addActivityLog('rotate left');
       robot.rotate(Rotate.LEFT);
-      break;
+      return 'rotate left';
     case Commands.RIGHT:
-      addActivityLog('rotate right');
       robot.rotate(Rotate.RIGHT);
-      break;
+      return 'rotate right';
     case Commands.REPORT:
       const robotPosition = robot.getPosition();
-      addActivityLog(
-        `report (x: ${robotPosition.x / gridSize}, y:${
-          noGridTiles - 1 - robotPosition.y / gridSize
-        }, orientation: ${robotPosition.orientation})`
-      );
-      break;
+      return `report (x: ${robotPosition.x / gridSize}, y: ${
+        noGridTiles - 1 - robotPosition.y / gridSize
+      }, orientation: ${robotPosition.orientation})`;
   }
+};
+
+export const sendCommands = (commands: string[]) => {
+  const activityLogEntries: string[] = [];
+  commands.forEach((command) => {
+    // console.log('command', { command, activityLogEntries });
+    if (command.startsWith(Commands.PLACE)) {
+      const placeVals = command.substring(6).split(',');
+      const activityLogEntry = sendCommand(Commands.PLACE, {
+        newRobotX: Number.parseInt(placeVals[0]),
+        newRobotY: noGridTiles - 1 - Number.parseInt(placeVals[1]),
+        newOrientation: placeVals[2] as Orientation,
+      });
+      activityLogEntries.push(activityLogEntry);
+    } else if (command.startsWith(Commands.MOVE)) {
+      const activityLogEntry = sendCommand(Commands.MOVE);
+      activityLogEntries.push(activityLogEntry);
+    } else if (command.startsWith(Commands.REVERSE)) {
+      const activityLogEntry = sendCommand(Commands.REVERSE);
+      activityLogEntries.push(activityLogEntry);
+    } else if (command.startsWith(Commands.LEFT)) {
+      const activityLogEntry = sendCommand(Commands.LEFT);
+      activityLogEntries.push(activityLogEntry);
+    } else if (command.startsWith(Commands.RIGHT)) {
+      const activityLogEntry = sendCommand(Commands.RIGHT);
+      activityLogEntries.push(activityLogEntry);
+    } else if (command.startsWith(Commands.REPORT)) {
+      const activityLogEntry = sendCommand(Commands.REPORT);
+      activityLogEntries.push(activityLogEntry);
+    }
+  });
+
+  activityLogEntries.forEach((activityLogEntry) => {
+    addActivityLog(activityLogEntry);
+  });
+
+  return activityLogEntries;
 };
 
 const elements = {
@@ -158,27 +185,8 @@ elements.submitCommands.addEventListener(
     }
 
     // console.log('submit button click', { commandStr, commands });
-    commandsToRun.slice(firstPlaceCommand).forEach((command) => {
-      // console.log('command', command);
-      if (command.startsWith(Commands.PLACE)) {
-        const placeVals = command.substring(6).split(',');
-        sendCommand(Commands.PLACE, {
-          newRobotX: Number.parseInt(placeVals[0]),
-          newRobotY: noGridTiles - 1 - Number.parseInt(placeVals[1]),
-          newOrientation: placeVals[2] as Orientation,
-        });
-      } else if (command.startsWith(Commands.MOVE)) {
-        sendCommand(Commands.MOVE);
-      } else if (command.startsWith(Commands.REVERSE)) {
-        sendCommand(Commands.REVERSE);
-      } else if (command.startsWith(Commands.LEFT)) {
-        sendCommand(Commands.LEFT);
-      } else if (command.startsWith(Commands.RIGHT)) {
-        sendCommand(Commands.RIGHT);
-      } else if (command.startsWith(Commands.REPORT)) {
-        sendCommand(Commands.REPORT);
-      }
-    });
+    const validCommands = commandsToRun.slice(firstPlaceCommand);
+    sendCommands(validCommands);
   },
   false
 );

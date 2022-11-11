@@ -1,8 +1,9 @@
-import Konva from 'konva';
+// import Konva from 'konva';
+import { Layer } from 'konva/lib/Layer';
 import { Circle, CircleConfig } from 'konva/lib/shapes/Circle';
 import { Rect, RectConfig } from 'konva/lib/shapes/Rect';
 import { Text, TextConfig } from 'konva/lib/shapes/Text';
-import { StageConfig } from 'konva/lib/Stage';
+import { Stage, StageConfig } from 'konva/lib/Stage';
 
 export type CanvasConfig = Pick<StageConfig, 'container' | 'width' | 'height'>;
 
@@ -44,12 +45,14 @@ export const getCanvas = ({
   width,
   height,
 }: CanvasConfig): Canvas => {
-  var stage = new Konva.Stage({
+  // console.log('Konva', { Konva });
+  // console.log('Konva', { Stage });
+  var stage = new Stage({
     container,
     width,
     height,
   });
-  var layer = new Konva.Layer();
+  var layer = new Layer();
   stage.add(layer);
   layer.draw();
 
@@ -65,7 +68,7 @@ export const getCanvas = ({
       padding = 20,
       align = 'center',
     }: TextParam) => {
-      const textElement = new Konva.Text({
+      const textElement = new Text({
         x,
         y,
         text,
@@ -89,7 +92,7 @@ export const getCanvas = ({
       stroke = 'black',
       strokeWidth = 1,
     }: RectParam) => {
-      var rect = new Konva.Rect({
+      var rect = new Rect({
         x,
         y,
         width,
@@ -110,7 +113,7 @@ export const getCanvas = ({
       stroke = 'black',
       strokeWidth = 1,
     }: CircleParam) => {
-      var circle = new Konva.Circle({
+      var circle = new Circle({
         x,
         y,
         radius,
