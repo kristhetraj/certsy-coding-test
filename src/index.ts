@@ -150,28 +150,36 @@ export const setupRobot = (params?: Partial<SetupParams>) => {
   );
 
   const sendCommand = (command: Commands, params?: PlaceParam) => {
+    let activityLogEntry;
     switch (command) {
       case Commands.PLACE:
         robot.place(params);
-        return `place (x: ${params.newRobotX}, y: ${
+        activityLogEntry = `place (x: ${params.newRobotX}, y: ${
           noGridTiles - 1 - params.newRobotY
         }, orientation: ${params.newOrientation})`;
+        break;
       case Commands.MOVE:
-        return robot.move(Direction.FORWARD);
+        activityLogEntry = robot.move(Direction.FORWARD);
+        break;
       case Commands.REVERSE:
-        return robot.move(Direction.BACKWARD);
+        activityLogEntry = robot.move(Direction.BACKWARD);
+        break;
       case Commands.LEFT:
         robot.rotate(Rotate.LEFT);
-        return 'rotate left';
+        activityLogEntry = 'rotate left';
+        break;
       case Commands.RIGHT:
         robot.rotate(Rotate.RIGHT);
-        return 'rotate right';
+        activityLogEntry = 'rotate right';
+        break;
       case Commands.REPORT:
         const robotPosition = robot.getPosition();
-        return `report (x: ${robotPosition.x / gridSize}, y: ${
+        activityLogEntry = `report (x: ${robotPosition.x / gridSize}, y: ${
           noGridTiles - 1 - robotPosition.y / gridSize
         }, orientation: ${robotPosition.orientation})`;
+        break;
     }
+    addActivityLog(activityLogEntry);
   };
 
   const sendCommands = (commandsToRun: string[]) => {
@@ -184,8 +192,7 @@ export const setupRobot = (params?: Partial<SetupParams>) => {
         if (placeVals.length === 3) {
           try {
             const placeParam = getPlaceParam(command, noGridTiles);
-            const activityLogEntry = sendCommand(Commands.PLACE, placeParam);
-            addActivityLog(activityLogEntry);
+            sendCommand(Commands.PLACE, placeParam);
           } catch (e) {
             // ignore bad place command
             // addActivityLog(
@@ -194,20 +201,15 @@ export const setupRobot = (params?: Partial<SetupParams>) => {
           }
         }
       } else if (command.startsWith(Commands.MOVE)) {
-        const activityLogEntry = sendCommand(Commands.MOVE);
-        addActivityLog(activityLogEntry);
+        sendCommand(Commands.MOVE);
       } else if (command.startsWith(Commands.REVERSE)) {
-        const activityLogEntry = sendCommand(Commands.REVERSE);
-        addActivityLog(activityLogEntry);
+        sendCommand(Commands.REVERSE);
       } else if (command.startsWith(Commands.LEFT)) {
-        const activityLogEntry = sendCommand(Commands.LEFT);
-        addActivityLog(activityLogEntry);
+        sendCommand(Commands.LEFT);
       } else if (command.startsWith(Commands.RIGHT)) {
-        const activityLogEntry = sendCommand(Commands.RIGHT);
-        addActivityLog(activityLogEntry);
+        sendCommand(Commands.RIGHT);
       } else if (command.startsWith(Commands.REPORT)) {
-        const activityLogEntry = sendCommand(Commands.REPORT);
-        addActivityLog(activityLogEntry);
+        sendCommand(Commands.REPORT);
       }
     });
   };
@@ -218,6 +220,8 @@ export const setupRobot = (params?: Partial<SetupParams>) => {
     getActivityLog: () => activityLog,
   };
 };
+
+setupRobot();
 
 // var obstruction = getObstruction({
 //   x: leftWall + gridSize,
