@@ -125,18 +125,64 @@ export const sendCommand = (command: Commands, params?: PlaceParam) => {
   }
 };
 
-export const sendCommands = (commands: string[]) => {
+const getPlaceParam = (command: string): PlaceParam => {
+  const placeVals = command.substring(6).split(',');
+  const newRobotX = Number.parseInt(placeVals[0]);
+  const newRobotY = noGridTiles - 1 - Number.parseInt(placeVals[1]);
+  const newOrientation: Orientation =
+    Orientation[placeVals[2] as keyof typeof Orientation];
+  if (!newOrientation) {
+    throw new Error('orientation is not valid');
+  }
+
+  return {
+    newOrientation,
+    newRobotX,
+    newRobotY,
+  };
+};
+
+const getValidCommands = (commandsToRun: string[]) => {
+  const firstPlaceCommand = commandsToRun.findIndex((command) => {
+    if (command.startsWith(Commands.PLACE)) {
+      try {
+        getPlaceParam(command);
+        return true;
+      } catch (e) {
+        // no valid place param
+      }
+    }
+  });
+
+  if (firstPlaceCommand < 0) {
+    return [];
+  }
+
+  // console.log('submit button click', { commandStr, commands });
+  const validCommands = commandsToRun.slice(firstPlaceCommand);
+  return validCommands;
+};
+
+export const sendCommands = (commandsToRun: string[]) => {
+  const validCommands = getValidCommands(commandsToRun);
+
   const activityLogEntries: string[] = [];
-  commands.forEach((command) => {
+  validCommands.forEach((command) => {
     // console.log('command', { command, activityLogEntries });
     if (command.startsWith(Commands.PLACE)) {
       const placeVals = command.substring(6).split(',');
-      const activityLogEntry = sendCommand(Commands.PLACE, {
-        newRobotX: Number.parseInt(placeVals[0]),
-        newRobotY: noGridTiles - 1 - Number.parseInt(placeVals[1]),
-        newOrientation: placeVals[2] as Orientation,
-      });
-      activityLogEntries.push(activityLogEntry);
+      if (placeVals.length === 3) {
+        try {
+          const placeParam = getPlaceParam(command);
+          const activityLogEntry = sendCommand(Commands.PLACE, placeParam);
+          activityLogEntries.push(activityLogEntry);
+        } catch (e) {
+          // ignore bad place command
+          // activityLogEntries.push(
+          //   `error with PLACE command: ${command}. Must be in format 'PLACE X,Y,F'`
+          // );
+        }
+      }
     } else if (command.startsWith(Commands.MOVE)) {
       const activityLogEntry = sendCommand(Commands.MOVE);
       activityLogEntries.push(activityLogEntry);
@@ -175,18 +221,7 @@ elements.submitCommands.addEventListener(
     // console.log('submit button click', elements.commands.value);
     const commandStr = elements.commands.value;
     const commandsToRun = commandStr.split('\n');
-
-    const firstPlaceCommand = commandsToRun.findIndex((command) => {
-      return command.startsWith(Commands.PLACE);
-    });
-
-    if (firstPlaceCommand < 0) {
-      return;
-    }
-
-    // console.log('submit button click', { commandStr, commands });
-    const validCommands = commandsToRun.slice(firstPlaceCommand);
-    sendCommands(validCommands);
+    sendCommands(commandsToRun);
   },
   false
 );
