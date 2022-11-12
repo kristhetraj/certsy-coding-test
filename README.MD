@@ -1,3 +1,13 @@
-Robot tester
+# Robot tester
 
-Please click on index.html and run on a modern browser.
+## Installation
+
+Run ```npm install```
+
+## Live version
+
+Please click on dist/index.html and run on a modern browser.
+
+## Tests
+
+Run ```npm run test``` to execute the tests
